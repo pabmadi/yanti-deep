@@ -1,10 +1,21 @@
 #!/bin/sh
 # Yanti demo — arranque en Render/Docker.
-# 1) Siembra la DEMO (reset + seed + historial + magic links al buzón local).
-# 2) Levanta el server Next.js de producción en el puerto de la plataforma.
+# 1) Define la URL pública (Render expone RENDER_EXTERNAL_URL) para los magic links.
+# 2) Siembra la DEMO (reset + seed + historial + magic links al buzón local).
+# 3) Levanta el server Next.js de producción en el puerto de la plataforma.
 set -e
 
-echo "[yanti] Sembrando DEMO-1..."
+# En Render, RENDER_EXTERNAL_URL trae la URL pública (p.ej. https://yanti-demo.onrender.com).
+if [ -z "${YANTI_APP_URL:-}" ] && [ -n "${RENDER_EXTERNAL_URL:-}" ]; then
+  export YANTI_APP_URL="$RENDER_EXTERNAL_URL"
+  echo "[yanti] YANTI_APP_URL detectado de Render: $YANTI_APP_URL"
+fi
+# Fuera de Render (Docker local), default razonable.
+if [ -z "${YANTI_APP_URL:-}" ]; then
+  export YANTI_APP_URL="http://localhost:${PORT:-3000}"
+fi
+
+echo "[yanti] Sembrando DEMO-1 (base magic links: $YANTI_APP_URL)..."
 node --experimental-strip-types node_modules/vitest/vitest.mjs run tests/demo-reset.test.ts
 node --experimental-strip-types node_modules/vitest/vitest.mjs run tests/gen-links.test.ts
 

@@ -32,3 +32,11 @@ Thumbs.db
 # Residuos
 *.err
 
+
+# Residuos de typecheck/pruebas
+*.out
+*.err
+tsc-errors.txt
+tsconfig.tsbuildinfo
+inicio.html
+console.log('ERR'

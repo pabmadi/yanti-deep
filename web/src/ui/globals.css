@@ -495,4 +495,53 @@ footer.site { padding: var(--space-5) var(--space-4); text-align: center; color:
   .landing-step:hover { transform: none; }
 }
 
+/* Yanti en números (tarjetas de métricas con animación) */
+.landing-stats-inner {
+  max-width: 72rem; margin: 0 auto; width: 100%;
+}
+.landing-stats-grid {
+  list-style: none; margin: var(--space-6) 0 0; padding: 0;
+  display: grid; grid-template-columns: 1fr; gap: var(--space-4);
+}
+@media (min-width: 720px) { .landing-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .landing-stats-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1280px) { .landing-stats-grid { grid-template-columns: repeat(5, 1fr); } }
+.landing-stat {
+  border: 1px solid var(--yanti-border-default);
+  border-radius: var(--radius-lg);
+  background: var(--yanti-surface-card);
+  padding: var(--space-5);
+  display: flex; flex-direction: column; gap: var(--space-1);
+  transition: transform .25s ease, box-shadow .25s ease, opacity .5s ease;
+  opacity: 0; transform: translateY(16px);
+}
+.landing-stat.is-visible { opacity: 1; transform: none; }
+.landing-stat:hover { transform: translateY(-4px); box-shadow: var(--shadow-2); }
+.landing-stat-value {
+  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+  font-weight: 800; letter-spacing: -0.01em; line-height: 1.1;
+  color: var(--yanti-action-primary);
+  font-variant-numeric: tabular-nums;
+}
+.landing-stat-label { font-weight: 800; font-size: var(--text-base); margin-top: var(--space-1); }
+.landing-stat-sub { color: var(--text-secondary); font-size: var(--text-xs); line-height: 1.4; }
+.landing-stat-bars {
+  display: flex; align-items: flex-end; gap: 3px;
+  height: 48px;
+  /* Empuja las barras al borde inferior de la tarjeta (todas a la misma línea
+     aunque el texto de cada tarjeta ocupe distinto alto). */
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+.landing-stat-bar {
+  flex: 1; border-radius: 2px 2px 0 0;
+  background: color-mix(in srgb, var(--yanti-action-primary) 70%, transparent);
+  transition: height 1s cubic-bezier(0.22, 1, 0.36, 1);
+  min-width: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-stat { opacity: 1; transform: none; transition: none; }
+  .landing-stat-bar { transition: none; }
+}
+
 

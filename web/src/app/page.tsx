@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentSession } from "@/ui/lib/session";
 import { Reveal } from "@/ui/components/landing/Reveal";
+import { LandingStats } from "@/ui/components/landing/LandingStats";
 
 export const metadata = {
   title: "Yanti — Comprá entre personas con más confianza",
@@ -37,6 +38,42 @@ const STEPS = [
     n: 5,
     title: "Yanti resuelve las disputas",
     body: "Si hay algún problema, Yanti analiza las evidencias y puede devolver el importe al comprador.",
+  },
+];
+
+/* Métricas ilustrativas de la demo (evolución de Yanti en números). */
+const STATS = [
+  {
+    value: 48250,
+    label: "Usuarios",
+    sub: "Personas que ya compran con confianza",
+    bars: [12, 18, 22, 30, 38, 46, 55, 64, 74, 85, 93, 100],
+  },
+  {
+    value: 128400,
+    label: "Operaciones protegidas",
+    sub: "Compraventas completadas de punta a punta",
+    bars: [8, 14, 20, 27, 34, 45, 52, 61, 70, 82, 90, 100],
+  },
+  {
+    value: 21450,
+    label: "Monto transaccionado",
+    prefix: "$ ",
+    suffix: " M",
+    sub: "En compraventas protegidas",
+    bars: [10, 15, 24, 29, 40, 48, 60, 66, 78, 86, 95, 100],
+  },
+  {
+    value: 18,
+    label: "Disputas resueltas",
+    sub: "Con devolución al comprador cuando correspondió",
+    bars: [15, 20, 28, 36, 44, 52, 61, 68, 76, 85, 93, 100],
+  },
+  {
+    value: 5,
+    label: "Países",
+    sub: "Argentina, Brasil, México, Chile y Uruguay",
+    bars: [20, 20, 20, 40, 40, 40, 60, 60, 60, 80, 100, 100],
   },
 ];
 
@@ -114,7 +151,7 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* Confianza / CTA final */}
+        {/* Confianza / Yanti en números */}
         <section className="landing-trust" aria-labelledby="trust-title">
           <Reveal className="landing-trust-inner">
             {/* Escudo (check) — símbolo de protección */}
@@ -148,9 +185,11 @@ export default async function LandingPage() {
             <h2 id="trust-title" className="landing-section-title">
               Claridad para ambas partes, de principio a fin.
             </h2>
-            <Link href="/ingresar" className="btn btn-primary btn-lg">
-              Empezar
-            </Link>
+          </Reveal>
+
+          {/* Yanti en números */}
+          <Reveal className="landing-stats-inner">
+            <LandingStats items={STATS} />
           </Reveal>
         </section>
       </main>

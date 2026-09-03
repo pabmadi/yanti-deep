@@ -1,0 +1,40 @@
+:root {
+  /* Official identity colors — do not use alone for body text on light surfaces. */
+  --yanti-brand-cyan: #02c3c3;
+  --yanti-brand-coral: #fc6b5d;
+  --yanti-brand-ink: #292426;
+  --yanti-brand-carbon: #242833;
+  --yanti-brand-warm-white: #faf8f3;
+
+  /* Accessible functional derivatives for light mode. */
+  --yanti-action-primary: #006b70;
+  --yanti-action-primary-text: #ffffff;
+  --yanti-action-accent: #9e352f;
+  --yanti-action-accent-text: #ffffff;
+  --yanti-text-primary: #292426;
+  --yanti-text-inverse: #faf8f3;
+  --yanti-surface-page: #faf8f3;
+  --yanti-surface-card: #ffffff;
+  --yanti-border-default: #d8d3cd;
+  --yanti-focus-ring: #006b70;
+
+  /* Semantic colors stay independent from the brand ribbons. */
+  --yanti-success: #157a4f;
+  --yanti-warning: #8a5a00;
+  --yanti-error: #b42318;
+  --yanti-info: #2457c5;
+}
+
+[data-theme="dark"] {
+  --yanti-action-primary: #02c3c3;
+  --yanti-action-primary-text: #242833;
+  --yanti-action-accent: #fc6b5d;
+  --yanti-action-accent-text: #242833;
+  --yanti-text-primary: #faf8f3;
+  --yanti-text-inverse: #242833;
+  --yanti-surface-page: #242833;
+  --yanti-surface-card: #303542;
+  --yanti-border-default: #555c6a;
+  --yanti-focus-ring: #02c3c3;
+}
+

@@ -1,0 +1,16 @@
+# Dependencias
+node_modules/
+
+# Build de Next
+.next/
+out/
+
+# Datos locales y logs de la demo
+.yanti-local/
+dev*.log
+dev*.err.log
+*.log
+
+# Misc
+.DS_Store
+Thumbs.db

@@ -1,0 +1,7 @@
+node_modules
+.next
+.yanti-local
+nextdev.log
+nextprod.log
+Dockerfile
+.dockerignore

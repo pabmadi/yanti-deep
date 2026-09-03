@@ -1,0 +1,8 @@
+﻿npx.cmd : npm notice run yanti-web@0.1.0 npx
+En línea: 2 Carácter: 1
++ npx.cmd tsc --noEmit --pretty false 2>&1 | Out-File -Encoding utf8 ty ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run yanti-web@0.1.0 npx:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run tsc --noEmit --pretty false

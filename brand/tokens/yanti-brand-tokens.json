@@ -1,0 +1,35 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "brand": {
+    "cyan": { "$type": "color", "$value": "#02C3C3" },
+    "coral": { "$type": "color", "$value": "#FC6B5D" },
+    "ink": { "$type": "color", "$value": "#292426" },
+    "carbon": { "$type": "color", "$value": "#242833" },
+    "warmWhite": { "$type": "color", "$value": "#FAF8F3" }
+  },
+  "light": {
+    "actionPrimary": { "$type": "color", "$value": "#006B70" },
+    "actionAccent": { "$type": "color", "$value": "#9E352F" },
+    "textPrimary": { "$type": "color", "$value": "#292426" },
+    "surfacePage": { "$type": "color", "$value": "#FAF8F3" },
+    "surfaceCard": { "$type": "color", "$value": "#FFFFFF" },
+    "borderDefault": { "$type": "color", "$value": "#D8D3CD" },
+    "focusRing": { "$type": "color", "$value": "#006B70" }
+  },
+  "dark": {
+    "actionPrimary": { "$type": "color", "$value": "#02C3C3" },
+    "actionAccent": { "$type": "color", "$value": "#FC6B5D" },
+    "textPrimary": { "$type": "color", "$value": "#FAF8F3" },
+    "surfacePage": { "$type": "color", "$value": "#242833" },
+    "surfaceCard": { "$type": "color", "$value": "#303542" },
+    "borderDefault": { "$type": "color", "$value": "#555C6A" },
+    "focusRing": { "$type": "color", "$value": "#02C3C3" }
+  },
+  "semantic": {
+    "success": { "$type": "color", "$value": "#157A4F" },
+    "warning": { "$type": "color", "$value": "#8A5A00" },
+    "error": { "$type": "color", "$value": "#B42318" },
+    "info": { "$type": "color", "$value": "#2457C5" }
+  }
+}
+

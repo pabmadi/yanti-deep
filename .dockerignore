@@ -1,0 +1,13 @@
+# No enviar al contexto de build lo que la imagen no necesita
+.git
+.commandcode
+doc
+brand
+node_modules
+.next
+.yanti-local
+*.log
+*.out
+*.err
+web/Dockerfile
+web/.dockerignore

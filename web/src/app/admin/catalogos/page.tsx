@@ -41,7 +41,7 @@ export default async function AdminCatalogosPage({ searchParams }: { searchParam
           </table>
         </div>
         <details className="mt-3">
-          <summary className="btn btn-secondary btn-sm" style={{ display: "inline-block" }}>+ Nueva categoría</summary>
+          <summary className="btn btn-primary btn-sm">+ Nueva categoría</summary>
           <form action={saveCategoryAction} className="flex-col mt-3" style={{ gap: 12, maxWidth: 480 }}>
             <input type="hidden" name="enabled" value="1" />
             <div className="field">
@@ -86,7 +86,7 @@ export default async function AdminCatalogosPage({ searchParams }: { searchParam
           </table>
         </div>
         <details className="mt-3">
-          <summary className="btn btn-secondary btn-sm" style={{ display: "inline-block" }}>+ Nuevo país</summary>
+          <summary className="btn btn-primary btn-sm">+ Nuevo país</summary>
           <form action={saveCountryAction} className="flex-col mt-3" style={{ gap: 12, maxWidth: 480 }}>
             <input type="hidden" name="enabled" value="1" />
             <div className="field">

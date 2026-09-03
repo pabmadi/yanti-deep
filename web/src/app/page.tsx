@@ -7,7 +7,7 @@ import { Reveal } from "@/ui/components/landing/Reveal";
 export const metadata = {
   title: "Yanti — Comprá entre personas con más confianza",
   description:
-    "Yanti organiza la compra, acompaña cada paso y aplica controles preventivos para reducir riesgos durante la operación entre particulares.",
+    "Yanti vuelve seguras las compras entre desconocidos. Comprá con confianza en Marketplaces, grupos de WhatsApp, foros y más.",
 };
 
 /* Copy de la landing (UX-HOME aprobado, master v2). El acceso es vía /ingresar. */
@@ -16,12 +16,12 @@ const STEPS = [
   {
     n: 1,
     title: "Acuerdan las condiciones",
-    body: "Comprador y vendedor definen el producto, precio, forma de pago y condiciones de entrega.",
+    body: "Comprador y vendedor definen el producto, precio, forma de pago y condiciones de envío.",
   },
   {
     n: 2,
     title: "Yanti acompaña el pago y previene riesgos",
-    body: "El comprador registra su solicitud de pago y Yanti verifica que ambas partes estén de acuerdo.",
+    body: "El comprador realiza el pago y Yanti avisa al vendedor que puede despachar.",
   },
   {
     n: 3,
@@ -32,6 +32,11 @@ const STEPS = [
     n: 4,
     title: "Yanti libera el pago",
     body: "Cuando se cumplen las condiciones y ambas partes confirman, Yanti procede a la liberación del pago al vendedor.",
+  },
+  {
+    n: 5,
+    title: "Yanti resuelve las disputas",
+    body: "Si hay algún problema, Yanti analiza las evidencias y puede devolver el importe al comprador.",
   },
 ];
 
@@ -71,8 +76,10 @@ export default async function LandingPage() {
               Comprá entre personas con más confianza
             </h1>
             <p className="landing-hero-sub">
-              Yanti organiza la compra, acompaña cada paso y aplica controles preventivos para reducir
-              riesgos durante la operación.
+              Yanti vuelve seguras las compras entre desconocidos.
+            </p>
+            <p className="landing-hero-sub2">
+              Comprá con confianza en Marketplaces, grupos de WhatsApp, foros, etc.
             </p>
             <div className="landing-hero-actions">
               <Link href="/ingresar" className="btn btn-primary btn-lg">

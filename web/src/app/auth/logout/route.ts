@@ -16,7 +16,8 @@ export async function POST(request: NextRequest) {
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
   const proto = request.headers.get("x-forwarded-proto") ?? "http";
   const origin = host ? `${proto}://${host}` : process.env.YANTI_APP_URL ?? "http://localhost:3100";
-  const res = NextResponse.redirect(new URL("/ingresar", origin), 303);
+  // Tras salir, se vuelve a la landing pública (raíz), no al login.
+  const res = NextResponse.redirect(new URL("/", origin), 303);
   res.cookies.delete(SESSION_COOKIE);
   return res;
 }

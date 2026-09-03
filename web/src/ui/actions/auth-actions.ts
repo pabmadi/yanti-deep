@@ -55,7 +55,7 @@ export async function consumeTokenAction(formData: FormData) {
 
 export async function logoutAction() {
   await logout();
-  redirect("/ingresar");
+  redirect("/"); // volver a la landing pública
 }
 
 /** Atajo de demo: pide el magic link de una cuenta demo determinada. */

@@ -142,6 +142,12 @@ button { font-family: inherit; cursor: pointer; }
 .btn-sm { padding: 6px 12px; min-height: 36px; font-size: var(--text-sm); }
 .btn-block { width: 100%; }
 
+/* <summary> que actúa como botón (p. ej. "Nueva categoría" en catálogos):
+   oculta el marcador nativo de details para que se vea como botón real. */
+summary.btn { list-style: none; cursor: pointer; }
+summary.btn::-webkit-details-marker { display: none; }
+summary.btn::marker { content: ""; }
+
 .field { margin-bottom: var(--space-4); display: flex; flex-direction: column; gap: 6px; }
 .field label { font-weight: 700; font-size: var(--text-sm); }
 .field input, .field select, .field textarea {
@@ -400,8 +406,15 @@ footer.site { padding: var(--space-5) var(--space-4); text-align: center; color:
   color: var(--text-secondary);
   font-size: clamp(1rem, 2vw, 1.2rem);
   line-height: 1.55;
-  margin: 0 auto var(--space-6);
+  margin: 0 auto var(--space-3);
   max-width: 46ch;
+}
+.landing-hero-sub2 {
+  color: var(--text-secondary);
+  font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+  line-height: 1.5;
+  margin: 0 auto var(--space-6);
+  max-width: 52ch;
 }
 .landing-hero-actions {
   display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap;
@@ -424,7 +437,13 @@ footer.site { padding: var(--space-5) var(--space-4); text-align: center; color:
   .landing-steps-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (min-width: 1024px) {
-  .landing-steps-grid { grid-template-columns: repeat(4, 1fr); }
+  .landing-steps-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 1280px) {
+  .landing-steps-grid { grid-template-columns: repeat(5, 1fr); }
+  .landing-step { padding: var(--space-4); }
+  .landing-step h3 { font-size: var(--text-base); }
+  .landing-step p { font-size: var(--text-xs); }
 }
 .landing-step {
   background: var(--yanti-surface-subtle, #f1eee8);

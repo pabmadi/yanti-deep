@@ -77,12 +77,22 @@ const STATS = [
   },
 ];
 
-export default async function LandingPage() {
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ estilo?: string | string[] }>;
+}) {
   const session = await currentSession();
   if (session) redirect("/inicio");
 
+  const params = (await searchParams) ?? {};
+  const estilo = Array.isArray(params.estilo) ? params.estilo[0] : params.estilo;
+  const isYouth = estilo === "joven";
+  const styleQuery = isYouth ? "?estilo=joven" : "";
+  const anchorHref = (anchor: string) => `${styleQuery}${anchor}`;
+
   return (
-    <div className="landing">
+    <div className={`landing${isYouth ? " landing--young" : ""}`}>
       {/* Navbar */}
       <header className="landing-nav">
         <div className="landing-nav-inner">
@@ -91,9 +101,17 @@ export default async function LandingPage() {
             <span aria-hidden="true">Yanti</span>
           </Link>
           <nav aria-label="Principal" className="landing-nav-links">
-            <a href="#como-funciona" className="landing-nav-link">
+            <a href={anchorHref("#como-funciona")} className="landing-nav-link">
               Cómo funciona
             </a>
+            <span className="landing-style-switcher" aria-label="Estilo de landing">
+              <Link href="/" className="landing-style-link" aria-current={!isYouth ? "page" : undefined}>
+                Clásica
+              </Link>
+              <Link href="/?estilo=joven" className="landing-style-link" aria-current={isYouth ? "page" : undefined}>
+                Joven
+              </Link>
+            </span>
           </nav>
           <Link href="/ingresar" className="btn btn-primary landing-nav-cta">
             Ingresar
@@ -105,15 +123,28 @@ export default async function LandingPage() {
         {/* Hero */}
         <section className="landing-hero" aria-labelledby="hero-title">
           <Reveal className="landing-hero-inner">
+            {isYouth && (
+              <div className="landing-young-art" aria-hidden="true">
+                <span className="landing-young-orbit landing-young-orbit-a" />
+                <span className="landing-young-orbit landing-young-orbit-b" />
+                <svg className="landing-young-doodle" viewBox="0 0 220 180" fill="none">
+                  <path d="M32 104c18-45 66-66 116-40 24 13 35 36 36 63" stroke="currentColor" strokeWidth="9" strokeLinecap="round" />
+                  <path d="M27 117c30 31 82 42 130 16" stroke="currentColor" strokeWidth="9" strokeLinecap="round" />
+                  <circle cx="48" cy="54" r="13" fill="var(--landing-young-secondary)" />
+                  <circle cx="176" cy="42" r="8" fill="var(--landing-young-coral)" />
+                </svg>
+                <span className="landing-young-sticker">Compra con onda</span>
+              </div>
+            )}
             <p className="landing-eyebrow">
               <span className="landing-eyebrow-dot" aria-hidden="true" />
               La confianza también se puede construir
             </p>
             <h1 id="hero-title" className="landing-hero-title">
-              Comprá entre personas con más confianza
+              {isYouth ? "Comprá tranqui. Vendé con onda." : "Comprá entre personas con más confianza"}
             </h1>
             <p className="landing-hero-sub">
-              Yanti vuelve seguras las compras entre desconocidos.
+              {isYouth ? "El acuerdo claro que hace que todo fluya." : "Yanti vuelve seguras las compras entre desconocidos."}
             </p>
             <p className="landing-hero-sub2">
               Comprá con confianza en Marketplaces, grupos de WhatsApp, foros, etc.
@@ -122,7 +153,7 @@ export default async function LandingPage() {
               <Link href="/ingresar" className="btn btn-primary btn-lg">
                 Ingresar
               </Link>
-              <a href="#como-funciona" className="btn btn-secondary btn-lg">
+              <a href={anchorHref("#como-funciona")} className="btn btn-secondary btn-lg">
                 Cómo funciona
               </a>
             </div>
@@ -144,7 +175,7 @@ export default async function LandingPage() {
           <div className="landing-steps-inner">
             <Reveal>
               <h2 id="steps-title" className="landing-section-title">
-                Así de simple
+                {isYouth ? "Así de fácil" : "Así de simple"}
               </h2>
             </Reveal>
             <ol className="landing-steps-grid">
@@ -193,7 +224,7 @@ export default async function LandingPage() {
               />
             </svg>
             <h2 id="trust-title" className="landing-section-title">
-              Claridad para ambas partes, de principio a fin.
+              {isYouth ? "Más confianza para comprar y vender." : "Claridad para ambas partes, de principio a fin."}
             </h2>
           </Reveal>
 

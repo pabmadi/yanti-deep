@@ -20,7 +20,8 @@ const PRIVATE_PREFIXES = [
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isPrivate = PRIVATE_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  const isPublicProfile = pathname.startsWith("/perfil/publico/");
+  const isPrivate = !isPublicProfile && PRIVATE_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
   if (!isPrivate) return NextResponse.next();
 
   const token = request.cookies.get("yanti_session")?.value;

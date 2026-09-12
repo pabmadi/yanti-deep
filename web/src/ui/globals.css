@@ -300,6 +300,14 @@ tr:last-child td { border-bottom: none; }
 .rating-summary { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 18px; }
 .rating-summary strong { font-size: 2rem; }
 .rating-summary span, .rating-stars { color: #d08a00; letter-spacing: 2px; }
+.rating-picker { border: 0; padding: 0; margin: 0; }
+.rating-picker legend { margin-bottom: 8px; }
+.rating-picker-stars { display: flex; align-items: center; gap: 4px; }
+.rating-star-button { border: 0; background: transparent; color: var(--border-strong); cursor: pointer; font-size: 2.25rem; line-height: 1; padding: 2px 4px; transition: color .15s ease, transform .15s ease; }
+.rating-star-button:hover, .rating-star-button:focus-visible, .rating-star-button.is-selected { color: #e2a400; transform: scale(1.08); }
+.rating-star-button:focus-visible { outline: var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-sm); }
+.rating-picker-value { display: block; color: var(--text-secondary); font-size: var(--text-sm); margin-top: 5px; }
+.rating-comment-input { min-height: 132px; resize: vertical; line-height: 1.5; }
 
 /* Tabs / datos en fila */
 .dl { display: grid; grid-template-columns: 1fr; gap: 2px 16px; margin: 0; }

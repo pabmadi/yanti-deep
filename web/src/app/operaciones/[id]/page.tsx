@@ -23,6 +23,7 @@ import { disputeStatusLabel, paymentStatusLabel } from "../transaction-status-la
 import { TransactionTrackingCode } from "./TransactionTrackingCode";
 import { listEvidenceForOperation } from "@/data/repos/evidence-repo";
 import { ImageLightbox } from "@/ui/components/ImageLightbox";
+import { RatingStars } from "@/ui/components/RatingStars";
 import { listRatingsForOperation } from "@/data/repos/rating-repo";
 
 export default async function OperationDetailPage({
@@ -69,7 +70,7 @@ export default async function OperationDetailPage({
         </div>
 
         {evidence.length > 0 && <section className="card mt-3"><h2>Imágenes adjuntas</h2><div className="evidence-gallery">{evidence.map((item) => <ImageLightbox key={item.evidence_id} src={`/api/evidence/${item.evidence_id}`} alt={item.original_name ?? "Imagen adjunta"} />)}</div></section>}
-        {ratingEligible && <section className="card mt-3"><h2>Calificar la operación</h2>{myRating ? <p className="text-secondary">Ya enviaste tu calificación. Se publicará cuando ambas partes califiquen.</p> : <form action={submitRatingAction} className="flex-col"><input type="hidden" name="operationId" value={id} /><label htmlFor="stars">Estrellas</label><select id="stars" name="stars" defaultValue="5"><option value="5">★★★★★ Excelente</option><option value="4">★★★★ Muy buena</option><option value="3">★★★ Buena</option><option value="2">★★ Regular</option><option value="1">★ Mala</option></select><label htmlFor="rating-comment">Comentario</label><textarea id="rating-comment" name="comment" required minLength={10} placeholder="Contá brevemente cómo fue la experiencia" /><button className="btn btn-primary" type="submit">Enviar calificación</button></form>}</section>}
+        {ratingEligible && <section className="card mt-3"><h2>Calificar la operación</h2>{myRating ? <p className="text-secondary">Ya enviaste tu calificación. Se publicará cuando ambas partes califiquen.</p> : <form action={submitRatingAction} className="flex-col"><input type="hidden" name="operationId" value={id} /><RatingStars /><div className="field"><label htmlFor="rating-comment">Comentario</label><textarea className="rating-comment-input" id="rating-comment" name="comment" required minLength={10} rows={5} placeholder="Contá brevemente cómo fue la experiencia" /><p className="hint">Mínimo 10 caracteres.</p></div><button className="btn btn-primary" type="submit">Enviar calificación</button></form>}</section>}
 
         {sp.creada === "1" && (
           <div className="banner banner-success mt-3" role="status">

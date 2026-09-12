@@ -1,0 +1,3 @@
+"use client";
+import { useState } from "react";
+export function RatingStars({ name = "stars", initial = 5 }: { name?: string; initial?: number }) { const [value,setValue]=useState(initial); return <fieldset className="rating-picker"><legend>Estrellas</legend><div className="rating-picker-stars" role="radiogroup" aria-label="Seleccionar calificación"><input type="hidden" name={name} value={value}/>{[1,2,3,4,5].map(n=><button type="button" key={n} className={`rating-star-button${n<=value?" is-selected":""}`} onClick={()=>setValue(n)} aria-label={`${n} ${n===1?"estrella":"estrellas"}`} aria-pressed={n===value}>★</button>)}</div><span className="rating-picker-value">{value} de 5</span></fieldset> }

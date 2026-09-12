@@ -17,6 +17,7 @@ import { storeEvidence } from "@/data/repos/evidence-repo";
 import { simulateProviderWebhook, processFakeReturn } from "@/server/provider-fake";
 import { fromDecimal } from "@/domain/money";
 import { DomainError } from "@/domain/errors";
+import { createRating } from "@/data/repos/rating-repo";
 
 export interface DraftFormValues {
   titulo: string;
@@ -186,6 +187,23 @@ export async function confirmReceiptAction(formData: FormData) {
     confirmReceipt(getDb(), operationId, accountId, `confirm-${operationId}`);
   });
   redirect(`/operaciones/${operationId}?confirmada=1`);
+}
+
+export async function submitRatingAction(formData: FormData) {
+  const operationId = String(formData.get("operationId") ?? "");
+  const stars = Number(formData.get("stars") ?? 0);
+  const comment = String(formData.get("comment") ?? "");
+  await withAccount((accountId) => {
+    const db = getDb();
+    const op = db.prepare("SELECT buyer_id, seller_id FROM operation WHERE operation_id=?").get(operationId) as { buyer_id:string|null; seller_id:string }|undefined;
+    if (!op) throw new DomainError("ERR-VALID-001", "Operación inexistente", 404);
+    const role = op.buyer_id === accountId ? "BUYER" : op.seller_id === accountId ? "SELLER" : null;
+    if (!role) throw new DomainError("ERR-AUTH-001", "No autorizado", 404);
+    const targetId = role === "BUYER" ? op.seller_id : op.buyer_id;
+    if (!targetId) throw new DomainError("ERR-VALID-001", "La contraparte no está disponible", 400);
+    createRating(db, { operationId, authorId: accountId, targetId, role, stars, comment });
+  });
+  redirect(`/operaciones/${operationId}?calificada=1`);
 }
 
 export async function openDisputeAction(formData: FormData) {

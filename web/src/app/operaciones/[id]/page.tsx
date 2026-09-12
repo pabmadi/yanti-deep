@@ -14,6 +14,7 @@ import {
   declareShipmentAction,
   confirmReceiptAction,
   openDisputeAction,
+  submitRatingAction,
 } from "@/ui/actions/operation-actions";
 import Link from "next/link";
 import { TransactionDraftReview } from "./TransactionDraftReview";
@@ -22,6 +23,7 @@ import { disputeStatusLabel, paymentStatusLabel } from "../transaction-status-la
 import { TransactionTrackingCode } from "./TransactionTrackingCode";
 import { listEvidenceForOperation } from "@/data/repos/evidence-repo";
 import { ImageLightbox } from "@/ui/components/ImageLightbox";
+import { listRatingsForOperation } from "@/data/repos/rating-repo";
 
 export default async function OperationDetailPage({
   params,
@@ -36,6 +38,7 @@ export default async function OperationDetailPage({
   const { id } = await params;
   const sp = await searchParams;
   const evidence = listEvidenceForOperation(getDb(), id).filter((item) => item.mime_type?.startsWith("image/"));
+  const ratings = listRatingsForOperation(getDb(), id);
 
   const db = getDb();
   let detail;
@@ -49,6 +52,8 @@ export default async function OperationDetailPage({
   const op = detail.operation;
   const role = detail.role;
   const ag = detail.agreement;
+  const myRating = ratings.find((rating) => rating.author_id === account.account_id);
+  const ratingEligible = ["COMPLETED", "REFUNDED"].includes(op.state) && (detail.role === "BUYER" || detail.role === "SELLER");
 
   return (
     <AppShell account={account}>
@@ -64,6 +69,7 @@ export default async function OperationDetailPage({
         </div>
 
         {evidence.length > 0 && <section className="card mt-3"><h2>Imágenes adjuntas</h2><div className="evidence-gallery">{evidence.map((item) => <ImageLightbox key={item.evidence_id} src={`/api/evidence/${item.evidence_id}`} alt={item.original_name ?? "Imagen adjunta"} />)}</div></section>}
+        {ratingEligible && <section className="card mt-3"><h2>Calificar la operación</h2>{myRating ? <p className="text-secondary">Ya enviaste tu calificación. Se publicará cuando ambas partes califiquen.</p> : <form action={submitRatingAction} className="flex-col"><input type="hidden" name="operationId" value={id} /><label htmlFor="stars">Estrellas</label><select id="stars" name="stars" defaultValue="5"><option value="5">★★★★★ Excelente</option><option value="4">★★★★ Muy buena</option><option value="3">★★★ Buena</option><option value="2">★★ Regular</option><option value="1">★ Mala</option></select><label htmlFor="rating-comment">Comentario</label><textarea id="rating-comment" name="comment" required minLength={10} placeholder="Contá brevemente cómo fue la experiencia" /><button className="btn btn-primary" type="submit">Enviar calificación</button></form>}</section>}
 
         {sp.creada === "1" && (
           <div className="banner banner-success mt-3" role="status">

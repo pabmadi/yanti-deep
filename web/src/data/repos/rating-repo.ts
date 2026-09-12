@@ -5,6 +5,7 @@ import { errValidation } from "@/domain/errors";
 export type RatingRole = "BUYER" | "SELLER";
 export interface RatingRow { rating_id:string; operation_id:string; author_id:string; target_id:string; role:RatingRole; stars:number; comment:string; state:string; created_at:string; published_at:string|null; }
 export function listRatingsForOperation(db: DatabaseSync, operationId:string): RatingRow[] { return asRows<RatingRow>(db.prepare("SELECT * FROM rating WHERE operation_id=? ORDER BY created_at ASC").all(operationId)); }
+export function listRatingsForTarget(db: DatabaseSync, targetId:string): RatingRow[] { return asRows<RatingRow>(db.prepare("SELECT * FROM rating WHERE target_id=? AND state='PUBLISHED' ORDER BY published_at DESC").all(targetId)); }
 export function createRating(db: DatabaseSync, input:{operationId:string; authorId:string; targetId:string; role:RatingRole; stars:number; comment:string}): RatingRow {
   if (![1,2,3,4,5].includes(input.stars)) throw errValidation("La calificación debe tener entre 1 y 5 estrellas");
   if (input.authorId===input.targetId) throw errValidation("No podés calificarte a vos mismo");

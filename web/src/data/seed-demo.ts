@@ -199,6 +199,10 @@ export function seedDemoData(db: DatabaseSync): { completedId: string; disputeId
     trackingUrl: "https://www.andreani.com/seguimiento",
   });
   confirmReceipt(db, op1, buyerId, "demo-confirm-1");
+  // Calificaciones públicas de ejemplo para ambos perfiles.
+  const ratingNow = new Date().toISOString();
+  db.prepare("INSERT OR IGNORE INTO rating (rating_id, operation_id, author_id, target_id, role, stars, comment, state, created_at, published_at) VALUES (?,?,?,?,?,?,?,'PUBLISHED',?,?)").run("rat_demo_buyer", op1, buyerId, sellerId, "BUYER", 5, "Excelente comunicación y entrega tal como se acordó.", ratingNow, ratingNow);
+  db.prepare("INSERT OR IGNORE INTO rating (rating_id, operation_id, author_id, target_id, role, stars, comment, state, created_at, published_at) VALUES (?,?,?,?,?,?,?,'PUBLISHED',?,?)").run("rat_demo_seller", op1, sellerId, buyerId, "SELLER", 5, "Comprador responsable, claro y puntual con el pago.", ratingNow, ratingNow);
 
   // Operación 2: disputa resuelta con reembolso
   const op2 = createOperationDraft(db, {

@@ -5,12 +5,22 @@ import { StatusBadge } from "@/ui/components/StatusBadge";
 import { getDb } from "@/data/db";
 import { asRows } from "@/data/db";
 import { listOpenDisputes } from "@/server/disputes";
+import { listActiveReturnsAdmin } from "@/server/admin-queries";
 import { formatMoney } from "@/ui/lib/format";
 import { formatDate } from "@/ui/lib/format";
 import { reconcilePaymentAction } from "@/ui/actions/admin-actions";
-import { t } from "@/ui/lib/i18n";
+import { getTranslations } from "@/ui/lib/i18n";
+import { currentLocale } from "@/ui/lib/preferences";
+
+const RETURN_STATE_LABELS: Record<string, string> = {
+  INSTRUCTIONS_ISSUED: "Instrucciones emitidas",
+  PREPARING: "Preparando devolución",
+  DISPATCHED: "Despachada",
+  IN_TRANSIT: "En tránsito",
+};
 
 export default async function AdminHubPage({ searchParams }: { searchParams: Promise<{ reconciliado?: string; resuelta?: string }> }) {
+  const t = getTranslations(await currentLocale());
   const account = await currentAdmin();
   if (!account) redirect("/ingresar");
   const db = getDb();
@@ -28,16 +38,7 @@ export default async function AdminHubPage({ searchParams }: { searchParams: Pro
       .all(),
   );
   const openDisputes = listOpenDisputes(db);
-  const pendingReturns = asRows<{ return_id: string; operation_id: string }>(
-    db
-      .prepare(
-        `SELECT rc.return_id, rc.operation_id FROM return_case rc JOIN operation o ON o.operation_id = rc.operation_id
-         WHERE rc.state NOT IN ('RECIBIDA_CONFORME','CLOSED_REFUND','CLOSED_CONSEQUENCE') AND o.state='RETURN_REQUIRED'
-         ORDER BY rc.created_at ASC`,
-      )
-      .all(),
-  );
-  const firstReturnOp = pendingReturns[0]?.operation_id;
+  const pendingReturns = listActiveReturnsAdmin(db);
 
   return (
     <>
@@ -72,6 +73,40 @@ export default async function AdminHubPage({ searchParams }: { searchParams: Pro
                         <input type="hidden" name="operationId" value={p.operation_id} />
                         <button className="btn btn-primary btn-sm" type="submit">Reconciliar y acreditar</button>
                       </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="card mt-3">
+        <div className="flex-between">
+          <h2>Devoluciones pendientes</h2>
+          <span className="admin-tile-metric warn">{pendingReturns.length} activa(s)</span>
+        </div>
+        {pendingReturns.length === 0 ? (
+          <p className="text-secondary">No hay devoluciones pendientes.</p>
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <caption>Devoluciones activas que requieren seguimiento</caption>
+              <thead>
+                <tr><th>Producto</th><th>Código de soporte</th><th>Estado</th><th>Vence (UTC)</th><th></th></tr>
+              </thead>
+              <tbody>
+                {pendingReturns.map((r) => (
+                  <tr key={r.return_id}>
+                    <td>{r.title}</td>
+                    <td>{r.support_code}</td>
+                    <td><span className="status status-info" role="status">{RETURN_STATE_LABELS[r.state] ?? r.state.replace(/_/g, " ")}</span></td>
+                    <td>{r.deadline ? formatDate(r.deadline) : "—"}</td>
+                    <td>
+                      <Link href={`/admin/operaciones/${r.operation_id}`} className="btn btn-secondary btn-sm">
+                        Ver operación
+                      </Link>
                     </td>
                   </tr>
                 ))}
@@ -135,13 +170,6 @@ export default async function AdminHubPage({ searchParams }: { searchParams: Pro
           <h2>Auditoría</h2>
           <p>Registro inmutable de acciones administrativas.</p>
         </Link>
-        {pendingReturns.length > 0 && firstReturnOp && (
-          <Link href={`/admin/operaciones/${firstReturnOp}`} className="admin-tile">
-            <h2>Devoluciones pendientes</h2>
-            <p>Hay devoluciones por registrar recepción conforme.</p>
-            <span className="admin-tile-metric warn">{pendingReturns.length} activa(s)</span>
-          </Link>
-        )}
       </div>
     </>
   );

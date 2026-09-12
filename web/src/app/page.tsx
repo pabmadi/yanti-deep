@@ -126,6 +126,16 @@ export default async function LandingPage() {
                 Cómo funciona
               </a>
             </div>
+            <div className="landing-entry-points" aria-label="Elegí cómo empezar">
+              <div>
+                <strong>¿Vas a vender?</strong>
+                <span>Ingresá y después iniciá una solicitud para compartirla con tu comprador.</span>
+              </div>
+              <div>
+                <strong>¿Te invitaron a comprar?</strong>
+                <span>Ingresá desde el enlace que te compartió la otra persona.</span>
+              </div>
+            </div>
           </Reveal>
         </section>
 
@@ -189,6 +199,7 @@ export default async function LandingPage() {
 
           {/* Yanti en números */}
           <Reveal className="landing-stats-inner">
+            <p className="landing-stats-note">Métricas ilustrativas de esta demo local</p>
             <LandingStats items={STATS} />
           </Reveal>
         </section>

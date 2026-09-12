@@ -67,13 +67,21 @@ describe("Devoluciones admin", () => {
     expect(ret.state).toBe("INSTRUCTIONS_ISSUED");
     expect(listActiveReturnsAdmin(db).some((r) => r.return_id === ret.return_id)).toBe(true);
 
+    // Only the buyer can register a complete pending return.
+    expect(() => registerReturnDispatch(db, ret.return_id, sellerId, { carrier: "OCA", trackingCode: "NO" })).toThrow();
+    expect(() => registerReturnDispatch(db, ret.return_id, buyerId, { carrier: "  ", trackingCode: "NO" })).toThrow();
+    expect((db.prepare("SELECT state FROM return_case WHERE return_id=?").get(ret.return_id) as { state: string }).state).toBe("INSTRUCTIONS_ISSUED");
+
     // Comprador despacha la devolución
     registerReturnDispatch(db, ret.return_id, buyerId, { carrier: "OCA", trackingCode: "RET-CODE-1" });
+    expect(() => registerReturnDispatch(db, ret.return_id, buyerId, { carrier: "OCA", trackingCode: "REPLACED" })).toThrow();
+    expect((db.prepare("SELECT tracking_code FROM return_case WHERE return_id=?").get(ret.return_id) as { tracking_code: string }).tracking_code).toBe("RET-CODE-1");
     // Admin registra recepción conforme -> reembolso
     completeReturnAndRefund(db, ret.return_id, adminId);
     expect(getOperation(db, opId)!.state).toBe("REFUNDED");
     const after = db.prepare("SELECT state FROM return_case WHERE return_id=?").get(ret.return_id) as { state: string };
     expect(after.state).toBe("RECIBIDA_CONFORME");
+    expect(() => registerReturnDispatch(db, ret.return_id, buyerId, { carrier: "OCA", trackingCode: "AFTER-REFUND" })).toThrow();
     const audit = db.prepare("SELECT * FROM audit_record WHERE action='return.complete'").get();
     expect(audit).toBeTruthy();
   });

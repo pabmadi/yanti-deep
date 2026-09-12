@@ -77,6 +77,15 @@ export interface CreateOperationInput {
   expectedDeliveryDays?: number;
 }
 
+export interface UpdateOperationDraftInput {
+  title: string;
+  description: string;
+  baseAmountMinor: number;
+  buyerEmail?: string;
+  externalLink?: string;
+  expectedVersion: number;
+}
+
 export function createOperationDraft(db: DatabaseSync, input: CreateOperationInput): string {
   const seller = getAccount(db, input.sellerId);
   if (!seller || seller.status !== "ACTIVE") throw errAuth();
@@ -149,6 +158,93 @@ export function createOperationDraft(db: DatabaseSync, input: CreateOperationInp
   return operationId;
 }
 
+/**
+ * Edita únicamente un borrador propio. La versión evita sobrescribir una edición
+ * concurrente y el desglose se vuelve a cotizar completo con la política activa.
+ */
+export function updateOperationDraft(
+  db: DatabaseSync,
+  operationId: string,
+  sellerId: string,
+  input: UpdateOperationDraftInput,
+): { ok: true; version: number } {
+  const op = getOperation(db, operationId);
+  if (!op || op.seller_id !== sellerId) throw errAuth();
+  const seller = getAccount(db, sellerId);
+  if (!seller || seller.status !== "ACTIVE") throw errAuth();
+  if (op.state !== "DRAFT") throw errValidation("El borrador ya fue enviado y no puede editarse");
+  if (op.version !== input.expectedVersion) throw errVersion();
+
+  const title = input.title.trim();
+  const description = input.description.trim();
+  const buyerEmail = input.buyerEmail?.trim().toLowerCase() || null;
+  const externalLink = input.externalLink?.trim() || null;
+  validateAmountRange(db, op.currency, input.baseAmountMinor);
+  if (!title || !description) throw errValidation("Título y descripción son obligatorios");
+  if (!buyerEmail) throw errValidation("Indica el correo del comprador antes de enviar");
+  if (buyerEmail === seller.email_canonical) throw errValidation("El comprador no puede ser la misma cuenta");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)) throw errValidation("Correo del comprador inválido");
+
+  const breakdown = quoteBreakdown(
+    db,
+    { countryCode: op.country_code, currency: op.currency, categoryCode: op.category_code },
+    input.baseAmountMinor,
+  );
+  const now = nowIso();
+
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const result = db.prepare(
+      `UPDATE operation
+       SET title=?, description=?, base_amount_minor=?, buyer_email=?, external_link=?, version=version+1, updated_at=?
+       WHERE operation_id=? AND seller_id=? AND state='DRAFT' AND version=?`,
+    ).run(
+      title,
+      description,
+      input.baseAmountMinor,
+      buyerEmail,
+      externalLink,
+      now,
+      operationId,
+      sellerId,
+      input.expectedVersion,
+    );
+    if (result.changes !== 1) throw errVersion();
+
+    const agreementResult = db.prepare(
+      `UPDATE agreement_version
+       SET title=?, description=?, base_amount_minor=?, external_link=?, seller_fee_minor=?, buyer_fee_minor=?, buyer_total_minor=?, seller_net_minor=?
+       WHERE operation_id=? AND version=1 AND sealed_at IS NULL`,
+    ).run(
+      title,
+      description,
+      input.baseAmountMinor,
+      externalLink,
+      breakdown.sellerFeeMinor,
+      breakdown.buyerFeeMinor,
+      breakdown.buyerTotalMinor,
+      breakdown.sellerNetMinor,
+      operationId,
+    );
+    if (agreementResult.changes !== 1) throw errValidation("El acuerdo ya fue sellado y no puede editarse");
+
+    recordAudit(db, {
+      actorId: sellerId,
+      action: "operation.draft.update",
+      resourceType: "operation",
+      resourceId: operationId,
+      before: { version: op.version, baseAmountMinor: op.base_amount_minor, buyerEmail: op.buyer_email },
+      after: { version: op.version + 1, baseAmountMinor: input.baseAmountMinor, buyerEmail },
+    });
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+
+  return { ok: true, version: op.version + 1 };
+}
+
 /** Congela la política al enviar (hito configurable; en el MVP local se congela al enviar). */
 export function sendOperation(db: DatabaseSync, operationId: string, sellerId: string, idemKey?: string): { ok: true } {
   const run = () => {
@@ -158,11 +254,12 @@ export function sendOperation(db: DatabaseSync, operationId: string, sellerId: s
     if (op.state !== "DRAFT") throw errValidation(`Solicitud en estado ${op.state}; no se puede enviar`);
     if (!op.buyer_email) throw errValidation("Indica el correo del comprador antes de enviar");
 
-    freezePolicy(db, operationId, {
+    const scope = {
       countryCode: op.country_code,
       currency: op.currency,
       categoryCode: op.category_code,
-    });
+    };
+    freezePolicy(db, operationId, scope);
     // Vencimiento de solicitud (configurable vía admin_setting; fallback local)
     const requestExpiryDays = getSettingNumber(db, "request_expiry_days", DEFAULT_REQUEST_EXPIRY_DAYS);
     const expiresAt = new Date(Date.now() + requestExpiryDays * 24 * 60 * 60 * 1000).toISOString();

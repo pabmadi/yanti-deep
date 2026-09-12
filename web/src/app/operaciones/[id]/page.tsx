@@ -3,11 +3,10 @@ import { currentSession } from "@/ui/lib/session";
 import { AppShell } from "@/ui/components/AppShell";
 import { StatusBadge } from "@/ui/components/StatusBadge";
 import { getDb } from "@/data/db";
-import { getOperationDetail } from "@/server/queries";
+import { getOperationDetail, type OperationDetail } from "@/server/queries";
 import { formatDate, formatMoney } from "@/ui/lib/format";
 import { t } from "@/ui/lib/i18n";
 import {
-  sendOperationAction,
   cancelOperationAction,
   acceptOperationAction,
   payAction,
@@ -17,12 +16,26 @@ import {
   openDisputeAction,
 } from "@/ui/actions/operation-actions";
 import Link from "next/link";
+import { TransactionDraftReview } from "./TransactionDraftReview";
+import type { DraftFormValues } from "@/ui/actions/operation-actions";
+import { disputeStatusLabel, paymentStatusLabel } from "../transaction-status-labels";
+import { TransactionTrackingCode } from "./TransactionTrackingCode";
+import { listEvidenceForOperation } from "@/data/repos/evidence-repo";
+import { ImageLightbox } from "@/ui/components/ImageLightbox";
 
-export default async function OperationDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function OperationDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ creada?: string; actualizada?: string; enviada?: string; despachada?: string; confirmada?: string }>;
+}) {
   const session = await currentSession();
   if (!session) redirect("/ingresar");
   const { account } = session;
   const { id } = await params;
+  const sp = await searchParams;
+  const evidence = listEvidenceForOperation(getDb(), id).filter((item) => item.mime_type?.startsWith("image/"));
 
   const db = getDb();
   let detail;
@@ -50,15 +63,82 @@ export default async function OperationDetailPage({ params }: { params: Promise<
           <StatusBadge state={op.state} />
         </div>
 
-        {ag && (
+        {evidence.length > 0 && <section className="card mt-3"><h2>Imágenes adjuntas</h2><div className="evidence-gallery">{evidence.map((item) => <ImageLightbox key={item.evidence_id} src={`/api/evidence/${item.evidence_id}`} alt={item.original_name ?? "Imagen adjunta"} />)}</div></section>}
+
+        {sp.creada === "1" && (
+          <div className="banner banner-success mt-3" role="status">
+            Borrador creado. Revisá los importes y los datos antes de enviarlo.
+          </div>
+        )}
+        {sp.actualizada === "1" && (
+          <div className="banner banner-success mt-3" role="status">
+            Cambios guardados. Las comisiones y los totales se recalcularon con el nuevo precio.
+          </div>
+        )}
+        {sp.enviada === "1" && (
+          <div className="banner banner-success mt-3" role="status">
+            Solicitud enviada a {op.buyer_email}. El comprador ya puede revisarla y aceptarla.
+          </div>
+        )}
+        {sp.despachada === "1" && (
+          <div className="banner banner-success mt-3" role="status">
+            Envío declarado. El comprador ya puede ver el seguimiento y confirmar la recepción.
+          </div>
+        )}
+        {sp.confirmada === "1" && (
+          <div className="banner banner-success mt-3" role="status">
+            Recepción confirmada. La liberación al vendedor fue procesada.
+          </div>
+        )}
+
+        <div className="card mt-3">
+          <h2>Qué sigue</h2>
+          <DeadlineSummary state={op.state} role={role} deadlines={detail.deadlines} />
+          <ActionArea
+            state={op.state}
+            role={role}
+            opId={id}
+            attemptId={detail.paymentAttempt?.attempt_id ?? null}
+            attemptState={detail.paymentAttempt?.state ?? null}
+            disputeId={detail.dispute?.dispute_id ?? null}
+            sellerName={role === "BUYER" ? detail.counterPartyName : account.display_name}
+            baseAmountMinor={ag?.base_amount_minor ?? null}
+            buyerFeeMinor={ag?.buyer_fee_minor ?? null}
+            buyerTotalMinor={ag?.buyer_total_minor ?? null}
+            sellerFeeMinor={ag?.seller_fee_minor ?? null}
+            sellerNetMinor={ag?.seller_net_minor ?? null}
+            currency={ag?.currency ?? op.currency}
+            draftValues={ag ? {
+              titulo: ag.title,
+              descripcion: ag.description,
+              monto: String(ag.base_amount_minor / 100),
+              categoria: op.category_code,
+              comprador_email: op.buyer_email ?? "",
+              enlace: op.external_link ?? "",
+              pais: op.country_code,
+              moneda: op.currency,
+              operationId: op.operation_id,
+              version: String(op.version),
+            } : null}
+          />
+        </div>
+
+        {ag && op.state !== "DRAFT" && (
           <div className="card mt-3">
-            <h2>{t.op.amount} y comisiones</h2>
+            <h2>{moneySummaryTitle(role, op.state)}</h2>
             <dl className="dl">
               <div><dt>{t.op.amount}</dt><dd className="money">{formatMoney(ag.base_amount_minor, ag.currency)}</dd></div>
-              <div><dt>{t.op.buyerFee}</dt><dd className="money">{formatMoney(ag.buyer_fee_minor, ag.currency)}</dd></div>
-              <div><dt>{t.op.totalToPay}</dt><dd className="money">{formatMoney(ag.buyer_total_minor, ag.currency)}</dd></div>
-              <div><dt>{t.op.sellerFee}</dt><dd className="money">{formatMoney(ag.seller_fee_minor, ag.currency)}</dd></div>
-              <div><dt>{t.op.netToReceive}</dt><dd className="money">{formatMoney(ag.seller_net_minor, ag.currency)}</dd></div>
+              {role === "SELLER" ? (
+                <>
+                  <div><dt>{t.op.sellerFee}</dt><dd className="money">{formatMoney(ag.seller_fee_minor, ag.currency)}</dd></div>
+                  <div><dt>{t.op.netToReceive}</dt><dd className="money amount-lg">{formatMoney(ag.seller_net_minor, ag.currency)}</dd></div>
+                </>
+              ) : (
+                <>
+                  <div><dt>{t.op.buyerFee}</dt><dd className="money">{formatMoney(ag.buyer_fee_minor, ag.currency)}</dd></div>
+                  <div><dt>{t.op.totalToPay}</dt><dd className="money amount-lg">{formatMoney(ag.buyer_total_minor, ag.currency)}</dd></div>
+                </>
+              )}
             </dl>
             <h3 className="mt-4">Condición acordada</h3>
             <p>{ag.description}</p>
@@ -74,22 +154,11 @@ export default async function OperationDetailPage({ params }: { params: Promise<
           </div>
         )}
 
-        <div className="card mt-3">
-          <h2>{t.op.actions}</h2>
-          <ActionArea
-            state={op.state}
-            role={role}
-            opId={id}
-            attemptId={detail.paymentAttempt?.attempt_id ?? null}
-            disputeId={detail.dispute?.dispute_id ?? null}
-          />
-        </div>
-
         {detail.paymentAttempt && detail.paymentAttempt.state !== "CREATED" && (
           <div className="card mt-3">
             <h2>Pago</h2>
             <dl className="dl">
-              <div><dt>Estado del pago</dt><dd>{detail.paymentAttempt.state.replace(/_/g, " ").toLowerCase()}</dd></div>
+              <div><dt>Estado del pago</dt><dd>{paymentStatusLabel(detail.paymentAttempt.state)}</dd></div>
               <div><dt>Total</dt><dd className="money">{formatMoney(detail.paymentAttempt.requested_total_minor, op.currency)}</dd></div>
               {detail.paymentAttempt.accredited_at && (
                 <div><dt>Acreditado</dt><dd>{formatDate(detail.paymentAttempt.accredited_at)}</dd></div>
@@ -103,7 +172,10 @@ export default async function OperationDetailPage({ params }: { params: Promise<
             <h2>{t.op.tracking}</h2>
             <dl className="dl">
               <div><dt>Transportista</dt><dd>{detail.shipment.carrier ?? "—"}</dd></div>
-              <div><dt>Tracking</dt><dd>{detail.shipment.tracking_code ?? "—"}</dd></div>
+              <div><dt>Tracking</dt><dd>{detail.shipment.tracking_code ? <TransactionTrackingCode code={detail.shipment.tracking_code} /> : "—"}</dd></div>
+              {detail.shipment.tracking_url && (
+                <div><dt>Seguimiento en línea</dt><dd><a href={detail.shipment.tracking_url} target="_blank" rel="noreferrer">Abrir seguimiento</a></dd></div>
+              )}
               {detail.shipment.declared_at && (
                 <div><dt>Despachado</dt><dd>{formatDate(detail.shipment.declared_at)}</dd></div>
               )}
@@ -116,7 +188,7 @@ export default async function OperationDetailPage({ params }: { params: Promise<
             <h2>Reclamo</h2>
             <dl className="dl">
               <div><dt>Motivo</dt><dd>{t.dispute.reasons[detail.dispute.reason as keyof typeof t.dispute.reasons] ?? detail.dispute.reason}</dd></div>
-              <div><dt>Estado</dt><dd>{detail.dispute.state.replace(/_/g, " ").toLowerCase()}</dd></div>
+              <div><dt>Estado</dt><dd>{disputeStatusLabel(detail.dispute.state)}</dd></div>
             </dl>
             <Link href={`/disputas/${detail.dispute.dispute_id}`} className="btn btn-secondary btn-sm mt-3">
               Ver reclamo y aportar evidencia
@@ -139,26 +211,93 @@ export default async function OperationDetailPage({ params }: { params: Promise<
   );
 }
 
+function DeadlineSummary({
+  state,
+  role,
+  deadlines,
+}: {
+  state: string;
+  role: "BUYER" | "SELLER";
+  deadlines: OperationDetail["deadlines"];
+}) {
+  if (state === "DRAFT") {
+    return <p className="text-secondary">Este borrador no vence. Podés revisarlo antes de enviarlo.</p>;
+  }
+  if (["AWAITING_ACCEPTANCE", "ACCEPTED_AWAITING_PAYMENT"].includes(state) && deadlines.requestExpiryAt) {
+    return (
+      <div className="banner banner-info">
+        <strong>La solicitud vence el {formatDate(deadlines.requestExpiryAt)} UTC.</strong>{" "}
+        {role === "BUYER" ? "Aceptala y completá el pago antes de esa fecha." : "Si no se paga, quedará expirada sin movimiento de fondos."}
+      </div>
+    );
+  }
+  if (["SHIPPED_AWAITING_RECEIPT", "CONFIRMATION_OVERDUE"].includes(state) && deadlines.receiptMilestoneAt) {
+    return (
+      <div className="banner banner-warning">
+        <strong>Fecha estimada para confirmar: {formatDate(deadlines.receiptMilestoneAt)} UTC.</strong>{" "}
+        {deadlines.confirmationGraceEndsAt && (
+          <>El período de seguimiento termina el {formatDate(deadlines.confirmationGraceEndsAt)} UTC. </>
+        )}
+        {deadlines.autoReleaseEnabled
+          ? "Al terminar ese período, Yanti puede iniciar la liberación si no hay un reclamo ni una retención."
+          : "La liberación automática no está habilitada; confirmá la recepción o abrí un reclamo según corresponda."}
+      </div>
+    );
+  }
+  if (state === "RETURN_REQUIRED" && deadlines.returnDeadlineAt) {
+    return (
+      <div className="banner banner-warning">
+        <strong>La devolución vence el {formatDate(deadlines.returnDeadlineAt)} UTC.</strong>
+      </div>
+    );
+  }
+  return null;
+}
+
+function moneySummaryTitle(role: "BUYER" | "SELLER", state: string): string {
+  if (["CANCELLED", "EXPIRED", "REFUNDED"].includes(state)) return "Importes del acuerdo";
+  if (state === "COMPLETED") return role === "SELLER" ? "Lo que recibiste" : "Lo que pagaste";
+  return role === "SELLER" ? "Lo que recibirás" : "Lo que pagarás";
+}
+
 /** Renderiza la acción correcta según estado y rol. */
 function ActionArea(props: {
   state: string;
   role: "BUYER" | "SELLER";
   opId: string;
   attemptId: string | null;
+  attemptState: string | null;
   disputeId: string | null;
+  sellerName: string | null;
+  baseAmountMinor: number | null;
+  buyerFeeMinor: number | null;
+  buyerTotalMinor: number | null;
+  sellerFeeMinor: number | null;
+  sellerNetMinor: number | null;
+  currency: string;
+  draftValues: DraftFormValues | null;
 }) {
-  const { state, role, opId, attemptId, disputeId } = props;
+  const {
+    state, role, opId, attemptId, attemptState, disputeId, sellerName,
+    baseAmountMinor, buyerFeeMinor, buyerTotalMinor, sellerFeeMinor, sellerNetMinor,
+    currency, draftValues,
+  } = props;
 
   if (role === "SELLER") {
     switch (state) {
       case "DRAFT":
         return (
           <div className="flex-col">
-            <p className="text-secondary">La solicitud está en borrador. Al enviarla se congela el acuerdo y se notifica al comprador.</p>
-            <form action={sendOperationAction}>
-              <input type="hidden" name="operationId" value={opId} />
-              <button className="btn btn-primary" type="submit">Enviar solicitud</button>
-            </form>
+            {draftValues && baseAmountMinor !== null && buyerFeeMinor !== null && buyerTotalMinor !== null && sellerFeeMinor !== null && sellerNetMinor !== null && (
+              <TransactionDraftReview
+                values={draftValues}
+                price={formatMoney(baseAmountMinor, currency)}
+                buyerFee={formatMoney(buyerFeeMinor, currency)}
+                buyerTotal={formatMoney(buyerTotalMinor, currency)}
+                sellerFee={formatMoney(sellerFeeMinor, currency)}
+                sellerNet={formatMoney(sellerNetMinor, currency)}
+              />
+            )}
           </div>
         );
       case "AWAITING_ACCEPTANCE":
@@ -182,15 +321,20 @@ function ActionArea(props: {
         return (
           <div className="flex-col">
             <div className="banner banner-success">Pago acreditado. Ahora podés despachar el producto.</div>
-            <form action={declareShipmentAction} className="flex-col">
+            <form action={declareShipmentAction} className="flex-col" encType="multipart/form-data">
               <input type="hidden" name="operationId" value={opId} />
               <div className="field">
                 <label htmlFor="carrier">Transportista</label>
                 <input id="carrier" name="transportista" required placeholder="Andreani, OCA, Correo Argentino…" />
               </div>
+              <div className="field"><label htmlFor="shipment-image">Foto del envío</label><input id="shipment-image" name="imagen_envio" type="file" accept="image/*" /><p className="hint">Opcional. Adjuntá una foto del paquete o comprobante, hasta 10 MB.</p></div>
               <div className="field">
                 <label htmlFor="tracking">Código de seguimiento</label>
                 <input id="tracking" name="tracking" required placeholder="Ej: AR123456789" />
+              </div>
+              <div className="field">
+                <label htmlFor="tracking-url">Enlace de seguimiento (opcional)</label>
+                <input id="tracking-url" name="tracking_url" type="url" placeholder="https://…" />
               </div>
               <button className="btn btn-primary" type="submit">Declarar envío</button>
             </form>
@@ -256,6 +400,9 @@ function ActionArea(props: {
           </div>
         );
       case "PAYMENT_IN_PROGRESS":
+        if (attemptState === "ACCREDITED_PENDING_RECONCILIATION" || attemptState === "UNDER_REVIEW") {
+          return <p className="text-secondary">El proveedor informó el pago. Yanti está verificando el importe antes de acreditarlo.</p>;
+        }
         return (
           <div className="flex-col">
             <p className="text-secondary">Tu pago está pendiente de confirmación del proveedor.</p>
@@ -282,9 +429,15 @@ function ActionArea(props: {
           <div className="flex-col">
             <div className="banner banner-warning">
               {state === "CONFIRMATION_OVERDUE"
-                ? "La fecha de entrega estimada venció. Confirmá la recepción o abrí un reclamo antes de que se libere el dinero."
+                ? "La fecha estimada de confirmación ya pasó. Confirmá la recepción o abrí un reclamo si hubo un problema."
                 : "El vendedor despachó tu compra. Revisá que esté todo bien y confirmá la recepción."}
             </div>
+            {sellerNetMinor !== null && (
+              <div className="banner banner-info">
+                Al confirmar, autorizás que se liberen {formatMoney(sellerNetMinor, currency)} a {sellerName ?? "la persona vendedora"}.
+                La operación quedará completada.
+              </div>
+            )}
             <form action={confirmReceiptAction}>
               <input type="hidden" name="operationId" value={opId} />
               <button className="btn btn-primary" type="submit">Confirmar recepción conforme</button>

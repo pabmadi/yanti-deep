@@ -249,9 +249,16 @@ export function registerReturnDispatch(
   if (!ret) throw errAuth();
   const role = getPartyRole(db, ret.operation_id, buyerId);
   if (role !== "BUYER") throw errAuth();
+  const operation = getOperation(db, ret.operation_id);
+  if (operation?.state !== "RETURN_REQUIRED" || ret.state !== "INSTRUCTIONS_ISSUED") {
+    throw errValidation("Esta devolución ya fue registrada o dejó de estar pendiente. Revisá su estado actual.");
+  }
+  const carrier = input.carrier.trim();
+  const trackingCode = input.trackingCode.trim();
+  if (!carrier || !trackingCode) throw errValidation("Indicá el transportista y el código de seguimiento.");
   db.prepare("UPDATE return_case SET state='DISPATCHED', carrier=?, tracking_code=?, dispatched_at=? WHERE return_id=?").run(
-    input.carrier,
-    input.trackingCode,
+    carrier,
+    trackingCode,
     nowIso(),
     returnId,
   );

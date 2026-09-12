@@ -6,9 +6,11 @@ import { getDb } from "@/data/db";
 import { asRows } from "@/data/db";
 import { listOperationsForAccount } from "@/data/repos/operation-repo";
 import { formatDate } from "@/ui/lib/format";
-import { t } from "@/ui/lib/i18n";
+import { getTranslations } from "@/ui/lib/i18n";
+import { currentLocale } from "@/ui/lib/preferences";
 
 export default async function MisReclamosPage() {
+  const t = getTranslations(await currentLocale());
   const session = await currentSession();
   if (!session) redirect("/ingresar");
   const { account } = session;

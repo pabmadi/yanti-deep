@@ -68,6 +68,11 @@ function StatCard({ item }: { item: StatItem }) {
   // Count-up animado cuando entra en view.
   useEffect(() => {
     if (!inView) return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) {
+      setDisplay(item.value);
+      return;
+    }
     const duration = 1400;
     const start = performance.now();
     let raf = 0;
@@ -92,18 +97,6 @@ function StatCard({ item }: { item: StatItem }) {
       </div>
       <div className="landing-stat-label">{item.label}</div>
       {item.sub && <div className="landing-stat-sub">{item.sub}</div>}
-      <div className="landing-stat-bars" aria-hidden="true">
-        {item.bars.map((h, i) => (
-          <span
-            key={i}
-            className="landing-stat-bar"
-            style={{
-              height: inView ? `${Math.max(4, Math.min(100, h))}%` : "0%",
-              transitionDelay: inView ? `${i * 70}ms` : "0ms",
-            }}
-          />
-        ))}
-      </div>
     </li>
   );
 }

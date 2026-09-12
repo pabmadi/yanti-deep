@@ -12,6 +12,7 @@ import { getShipment } from "@/data/repos/shipment-repo";
 import { getDisputeByOperation } from "@/data/repos/dispute-repo";
 import { balancesByAccount } from "@/data/repos/ledger-repo";
 import { errAuth } from "@/domain/errors";
+import { transactionDeadlines, type TransactionDeadlines } from "@/server/transaction-deadlines";
 
 export interface OperationDetail {
   operation: OperationRow;
@@ -35,6 +36,7 @@ export interface OperationDetail {
   } | null;
   shipment: { state: string; carrier: string | null; tracking_code: string | null; tracking_url: string | null; declared_at: string | null } | null;
   dispute: { dispute_id: string; state: string; reason: string | null } | null;
+  deadlines: TransactionDeadlines & { returnDeadlineAt: string | null };
   timeline: Array<{ event_id: string; label: string; actor_id: string | null; created_at: string; state_to: string | null }>;
   counterPartyName: string | null;
 }
@@ -71,6 +73,9 @@ export function getOperationDetail(db: DatabaseSync, operationId: string, viewer
   const attempt = getLatestAttempt(db, operationId);
   const shipment = getShipment(db, operationId);
   const dispute = getDisputeByOperation(db, operationId);
+  const returnCase = asRow<{ deadline: string | null } | undefined>(
+    db.prepare("SELECT deadline FROM return_case WHERE operation_id=? ORDER BY created_at DESC LIMIT 1").get(operationId),
+  );
   const timeline = asRows<{ event_id: string; label: string; actor_id: string | null; created_at: string; state_to: string | null }>(
     db.prepare("SELECT event_id, label, actor_id, created_at, state_to FROM operation_event WHERE operation_id=? ORDER BY created_at ASC").all(operationId),
   );
@@ -91,6 +96,7 @@ export function getOperationDetail(db: DatabaseSync, operationId: string, viewer
     paymentAttempt: attempt ? { attempt_id: attempt.attempt_id, state: attempt.state, requested_total_minor: attempt.requested_total_minor, accredited_at: attempt.accredited_at } : null,
     shipment: shipment ? { state: shipment.state, carrier: shipment.carrier, tracking_code: shipment.tracking_code, tracking_url: shipment.tracking_url, declared_at: shipment.declared_at } : null,
     dispute: dispute ? { dispute_id: dispute.dispute_id, state: dispute.state, reason: dispute.reason } : null,
+    deadlines: { ...transactionDeadlines(db, op), returnDeadlineAt: returnCase?.deadline ?? null },
     timeline,
     counterPartyName,
   };

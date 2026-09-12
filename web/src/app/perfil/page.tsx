@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { currentSession } from "@/ui/lib/session";
 import { AppShell } from "@/ui/components/AppShell";
+import { PreferenceControls } from "@/ui/components/PreferenceControls";
 
 export default async function PerfilPage() {
   const session = await currentSession();
@@ -21,6 +22,11 @@ export default async function PerfilPage() {
         <p className="text-secondary mt-3" style={{ fontSize: "var(--text-sm)" }}>
           En el MVP local el perfil se crea automáticamente al ingresar con el magic link.
         </p>
+        <section className="card mt-4" aria-labelledby="preferences-title">
+          <h2 id="preferences-title">Preferencias</h2>
+          <p className="text-secondary">Elegí el idioma de la interfaz y el modo de color para este dispositivo.</p>
+          <PreferenceControls />
+        </section>
       </div>
     </AppShell>
   );

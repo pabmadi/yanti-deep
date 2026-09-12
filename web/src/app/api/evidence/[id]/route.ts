@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";
+import { getDb } from "@/data/db";
+import { readEvidenceContent } from "@/data/repos/evidence-repo";
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) { const { id } = await params; const row = getDb().prepare("SELECT mime_type, storage_key FROM evidence_item WHERE evidence_id=? AND status='ACCEPTED'").get(id) as { mime_type:string|null; storage_key:string|null }|undefined; if (!row?.storage_key) return new NextResponse("Not found",{status:404}); try { return new NextResponse(readEvidenceContent(row.storage_key) as unknown as BodyInit,{headers:{"Content-Type":row.mime_type||"application/octet-stream","Cache-Control":"private, max-age=3600"}}); } catch { return new NextResponse("Not found",{status:404}); } }

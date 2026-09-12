@@ -50,7 +50,8 @@ export function openDispute(
   if (!op) throw errAuth();
   const role = getPartyRole(db, operationId, buyerId);
   if (role !== "BUYER") throw errAuth();
-  if (!["PAID_AWAITING_SHIPMENT", "SHIPPED_AWAITING_RECEIPT", "CONFIRMATION_OVERDUE"].includes(op.state)) {
+  const postClosure = ["COMPLETED", "REFUNDED"].includes(op.state);
+  if (!["PAID_AWAITING_SHIPMENT", "SHIPPED_AWAITING_RECEIPT", "CONFIRMATION_OVERDUE", "COMPLETED", "REFUNDED"].includes(op.state)) {
     throw errValidation(`No se puede reclamar en estado ${op.state}`);
   }
   const open = getOpenDispute(db, operationId);
@@ -62,9 +63,11 @@ export function openDispute(
   try {
     const disputeId = id("dsp");
     createDispute(db, { disputeId, operationId, openedBy: buyerId, reason: input.reason, description: input.description });
-    addHold(db, operationId, "DISPUTA_ABIERTA", "dispute", disputeId);
-    updateOperationState(db, operationId, "IN_DISPUTE", { reason: `Reclamo abierto: ${input.reason}` });
-    pushOperationEvent(db, { operationId, actorId: buyerId, eventType: "dispute.opened", label: "Reclamo abierto", stateFrom: op.state, stateTo: "IN_DISPUTE", metadata: { disputeId, reason: input.reason } });
+    if (!postClosure) {
+      addHold(db, operationId, "DISPUTA_ABIERTA", "dispute", disputeId);
+      updateOperationState(db, operationId, "IN_DISPUTE", { reason: `Reclamo abierto: ${input.reason}` });
+    }
+    pushOperationEvent(db, { operationId, actorId: buyerId, eventType: "dispute.opened", label: "Reclamo abierto", stateFrom: op.state, stateTo: postClosure ? op.state : "IN_DISPUTE", metadata: { disputeId, reason: input.reason, postClosure } });
     recordAudit(db, { actorId: buyerId, action: "dispute.open", resourceType: "operation", resourceId: operationId, reason: input.reason });
     db.exec("COMMIT");
     return { disputeId };

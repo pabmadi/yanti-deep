@@ -24,6 +24,7 @@ import { TransactionTrackingCode } from "./TransactionTrackingCode";
 import { listEvidenceForOperation } from "@/data/repos/evidence-repo";
 import { ImageLightbox } from "@/ui/components/ImageLightbox";
 import { RatingStars } from "@/ui/components/RatingStars";
+import { ConfirmSubmitForm } from "@/ui/components/ConfirmSubmitForm";
 import { listRatingsForOperation } from "@/data/repos/rating-repo";
 
 export default async function OperationDetailPage({
@@ -445,10 +446,10 @@ function ActionArea(props: {
                 La operación quedará completada.
               </div>
             )}
-            <form action={confirmReceiptAction}>
+            <ConfirmSubmitForm action={confirmReceiptAction} message="¿Confirmás que recibiste el producto? Esta acción libera el pago al vendedor.">
               <input type="hidden" name="operationId" value={opId} />
               <button className="btn btn-primary" type="submit">Confirmar recepción conforme</button>
-            </form>
+            </ConfirmSubmitForm>
             <details>
               <summary style={{ cursor: "pointer", fontWeight: 700 }}>¿Algo salió mal? Abrir un reclamo</summary>
               <form action={openDisputeAction} className="flex-col" style={{ marginTop: 12 }}>
@@ -486,9 +487,9 @@ function ActionArea(props: {
       case "REFUND_IN_PROGRESS":
         return <p className="text-secondary">Procesando el movimiento financiero…</p>;
       case "COMPLETED":
-        return <p className="text-secondary">Operación completada. El dinero fue liberado al vendedor.</p>;
+        return <div className="flex-col"><p className="text-secondary">Operación completada. El dinero fue liberado al vendedor.</p><details><summary style={{ cursor: "pointer", fontWeight: 700 }}>¿Algo salió mal? Abrir un reclamo</summary><form action={openDisputeAction} className="flex-col" style={{ marginTop: 12 }}><input type="hidden" name="operationId" value={opId} /><div className="field"><label htmlFor="motivo-completada">Motivo</label><select id="motivo-completada" name="motivo" required>{Object.entries(t.dispute.reasons).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div><div className="field"><label htmlFor="desc-completada">Describí el problema</label><textarea id="desc-completada" name="descripcion" required placeholder="Qué pasó y qué necesitás que revisemos…" /></div><button className="btn btn-accent" type="submit">Abrir reclamo</button></form></details></div>;
       case "REFUNDED":
-        return <p className="text-secondary">Operación finalizada: se te reembolsó el pago.</p>;
+        return <div className="flex-col"><p className="text-secondary">Operación finalizada: se te reembolsó el pago.</p><details><summary style={{ cursor: "pointer", fontWeight: 700 }}>¿Algo salió mal? Abrir un reclamo</summary><form action={openDisputeAction} className="flex-col" style={{ marginTop: 12 }}><input type="hidden" name="operationId" value={opId} /><div className="field"><label htmlFor="motivo-reembolsada">Motivo</label><select id="motivo-reembolsada" name="motivo" required>{Object.entries(t.dispute.reasons).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div><div className="field"><label htmlFor="desc-reembolsada">Describí el problema</label><textarea id="desc-reembolsada" name="descripcion" required placeholder="Qué pasó y qué necesitás que revisemos…" /></div><button className="btn btn-accent" type="submit">Abrir reclamo</button></form></details></div>;
       case "CANCELLED":
         return <p className="text-secondary">La solicitud fue cancelada. Sin cargo.</p>;
       case "EXPIRED":

@@ -29,6 +29,7 @@
 
   /* Tokens semánticos complementarios (spec UX §8.2) */
   --surface-subtle: #f3f0ea;
+  --yanti-surface-subtle: #f3f0ea;
   --surface-elevated: #ffffff;
   --surface-card: #ffffff;
   --text-secondary: #5d5753;
@@ -63,6 +64,7 @@
   --text-secondary: #c8c2ba;
   --text-link: #7fd4d4;
   --border-strong: #6a7282;
+  --yanti-surface-subtle: #2a2e3a;
 }
 
 * { box-sizing: border-box; }
